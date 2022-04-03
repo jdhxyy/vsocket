@@ -173,7 +173,7 @@ static void checkRxFifo(void) {
 bool VSocketCreate(VSocketInfo* socketInfo) {
     if (socketInfo == NULL || socketInfo->Pipe >= gMaxSocketNum || 
         gSockets[socketInfo->Pipe].used || socketInfo->MaxLen <= 0) {
-        LE(TAG, "socket:%d create failed!param is wrong", socketInfo->Pipe);
+        LE(TAG, "socket create failed!param is wrong");
         return false;
     }
 
@@ -225,7 +225,7 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
             gBuffer->len = socketInfo->MaxLen;
         }
     }
-    LE(TAG, "socket:%d create success", socketInfo->Pipe);
+    LI(TAG, "socket:%d create success", socketInfo->Pipe);
     return true;
 }
 
