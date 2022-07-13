@@ -180,7 +180,7 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
     if (socketInfo->TxFifoItemSum > 0) {
         // 多4个字节是因为fifo存储混合结构体需增加4字节长度
         gSockets[socketInfo->Pipe].txFifo = TZFifoCreate(gMid, 
-            socketInfo->TxFifoItemSum, socketInfo->MaxLen + 4);
+            socketInfo->TxFifoItemSum, socketInfo->MaxLen + sizeof(tTxTag) + 4);
         if (gSockets[socketInfo->Pipe].txFifo == 0) {
             LE(TAG, "socket:%d create failed!create tx fifo failed", socketInfo->Pipe);
             return false;
@@ -189,7 +189,7 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
     if (socketInfo->RxFifoItemSum > 0) {
         // 多4个字节是因为fifo存储混合结构体需增加4字节长度
         gSockets[socketInfo->Pipe].rxFifo = TZFifoCreate(gMid, 
-            socketInfo->RxFifoItemSum, socketInfo->MaxLen + 4);
+            socketInfo->RxFifoItemSum, socketInfo->MaxLen + sizeof(tRxTag) + 4);
         if (gSockets[socketInfo->Pipe].rxFifo == 0) {
             if (gSockets[socketInfo->Pipe].txFifo) {
                 TZFifoDelete(gSockets[socketInfo->Pipe].txFifo);
