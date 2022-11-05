@@ -12,10 +12,17 @@
 #include "async.h"
 #include "tzlist.h"
 #include "lagan.h"
+#include "statistics.h"
 
 #include <string.h>
 
 #define TAG "vsocket"
+
+// 统计项名称
+#define STATISTICS_RX_SUCCESS "vsocket_rx_success"
+#define STATISTICS_RX_FAIL "vsocket_rx_fail"
+#define STATISTICS_TX_SUCCESS "vsocket_tx_success"
+#define STATISTICS_TX_FAIL "vsocket_tx_fail"
 
 #pragma pack(1)
 
@@ -57,6 +64,12 @@ static TZBufferDynamic* gBuffer = NULL;
 // 存储接收观察者
 static intptr_t gList = 0;
 
+// 统计项id
+static int gIdRxSuccess = -1;
+static int gIdRxFail = -1;
+static int gIdTxSuccess = -1;
+static int gIdTxFail = -1;
+
 static int task(void);
 static void checkTxFifo(void);
 static void checkRxFifo(void);
@@ -66,6 +79,16 @@ static TZListNode* createNode(void);
 // VSocketLoad 模块载入
 // mid是tzmalloc内存管理中的内存id,maxSocketNum是最大端口数
 bool VSocketLoad(int mid, int maxSocketNum) {
+    gIdRxSuccess = StatisticsRegister(STATISTICS_RX_SUCCESS);
+    gIdRxFail = StatisticsRegister(STATISTICS_RX_FAIL);
+    gIdTxSuccess = StatisticsRegister(STATISTICS_TX_SUCCESS);
+    gIdTxFail = StatisticsRegister(STATISTICS_TX_FAIL);
+
+    if (gIdRxSuccess < 0 || gIdRxFail < 0 || gIdTxSuccess < 0 || gIdTxFail < 0) {
+        LE(TAG, "load fail!statistics register fail");
+        return false;
+    }
+
     if (mid < 0 || maxSocketNum < 0) {
         return false;
     }
@@ -236,19 +259,22 @@ bool VSocketTx(VSocketTxParam* txParam) {
         gSockets[txParam->Pipe].used == false || txParam->Bytes == NULL || 
         txParam->Size <= 0 || txParam->Size > gSockets[txParam->Pipe].maxLen) {
         LE(TAG, "%d send failed!param is wrong", txParam->Pipe);
+        StatisticsAdd(gIdTxFail);
         return false;
     }
     if (gSockets[txParam->Pipe].txFifo == 0) {
         if (gSockets[txParam->Pipe].isAllowSend()) {
-            gSockets[txParam->Pipe].send(txParam->Bytes, txParam->Size, 
-                txParam->IP, txParam->Port);
+            gSockets[txParam->Pipe].send(txParam->Bytes, txParam->Size, txParam->IP, txParam->Port);
+            StatisticsAdd(gIdTxSuccess);
             return true;
         }
         LW(TAG, "%d send failed!pipe is busy", txParam->Pipe);
+        StatisticsAdd(gIdTxFail);
         return false;
     }
     if (TZFifoWriteable(gSockets[txParam->Pipe].txFifo) == false) {
         LW(TAG, "%d send failed!fifo is full", txParam->Pipe);
+        StatisticsAdd(gIdTxFail);
         return false;
     }
 
@@ -258,8 +284,10 @@ bool VSocketTx(VSocketTxParam* txParam) {
     if (TZFifoWriteMix(gSockets[txParam->Pipe].txFifo, (uint8_t*)&tag, 
         sizeof(tTxTag), txParam->Bytes, txParam->Size) == false) {
         LW(TAG, "%d send failed!write fifo failed", txParam->Pipe);
+        StatisticsAdd(gIdTxFail);
         return false;
     }
+    StatisticsAdd(gIdTxSuccess);
     return true;
 }
 
@@ -278,21 +306,26 @@ bool VSocketRx(VSocketRxParam* rxParam) {
         gSockets[rxParam->Pipe].used == false || rxParam->Bytes == NULL || 
         rxParam->Size <= 0 || rxParam->Size > gSockets[rxParam->Pipe].maxLen) {
         LE(TAG, "%d receive failed!param is wrong", rxParam->Pipe);
+        StatisticsAdd(gIdRxFail);
         return false;
     }
     if (gSockets[rxParam->Pipe].rxFifo == 0) {
         LW(TAG, "%d receive failed!no fifo", rxParam->Pipe);
+        StatisticsAdd(gIdRxFail);
         return false;
     }
     if (TZFifoWriteable(gSockets[rxParam->Pipe].rxFifo) == false) {
         LW(TAG, "%d receive failed!fifo is full", rxParam->Pipe);
+        StatisticsAdd(gIdRxFail);
         return false;
     }
     if (TZFifoWriteMix(gSockets[rxParam->Pipe].rxFifo, (uint8_t*)&tag, 
         sizeof(tRxTag), rxParam->Bytes, rxParam->Size) == false) {
         LW(TAG, "%d receive failed!write fifo failed", rxParam->Pipe);
+        StatisticsAdd(gIdRxFail);
         return false;
     }
+    StatisticsAdd(gIdRxSuccess);
     return true;
 }
 

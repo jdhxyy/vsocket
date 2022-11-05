@@ -6,3 +6,4 @@ https://github.com/jdhxyy/tzlist.git
 https://github.com/jdhxyy/pt.git
 https://github.com/jdhxyy/tztype.git
 https://github.com/jdhxyy/tzfifo.git
+https://github.com/jdhxyy/statistics.git
