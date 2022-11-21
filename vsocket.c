@@ -305,23 +305,19 @@ bool VSocketRx(VSocketRxParam* rxParam) {
     if (rxParam->Pipe >= gMaxSocketNum || 
         gSockets[rxParam->Pipe].used == false || rxParam->Bytes == NULL || 
         rxParam->Size <= 0 || rxParam->Size > gSockets[rxParam->Pipe].maxLen) {
-        LE(TAG, "%d receive failed!param is wrong", rxParam->Pipe);
         StatisticsAdd(gIdRxFail);
         return false;
     }
     if (gSockets[rxParam->Pipe].rxFifo == 0) {
-        LW(TAG, "%d receive failed!no fifo", rxParam->Pipe);
         StatisticsAdd(gIdRxFail);
         return false;
     }
     if (TZFifoWriteable(gSockets[rxParam->Pipe].rxFifo) == false) {
-        LW(TAG, "%d receive failed!fifo is full", rxParam->Pipe);
         StatisticsAdd(gIdRxFail);
         return false;
     }
     if (TZFifoWriteMix(gSockets[rxParam->Pipe].rxFifo, (uint8_t*)&tag, 
         sizeof(tRxTag), rxParam->Bytes, rxParam->Size) == false) {
-        LW(TAG, "%d receive failed!write fifo failed", rxParam->Pipe);
         StatisticsAdd(gIdRxFail);
         return false;
     }
