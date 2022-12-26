@@ -71,8 +71,8 @@ static int gIdTxSuccess = -1;
 static int gIdTxFail = -1;
 
 static int task(void);
-static void checkTxFifo(void);
-static void checkRxFifo(void);
+static int checkTxFifo(void);
+static int checkRxFifo(void);
 static bool isObserverExist(VSocketRxFunc callback);
 static TZListNode* createNode(void);
 
@@ -127,11 +127,15 @@ static int task(void) {
     PT_END(&pt);
 }
 
-static void checkTxFifo(void) {
+static int checkTxFifo(void) {
+    static struct pt pt = {0};
     static tTxTag tag;
     static int num = 0;
+    static int i = 0;
 
-    for (int i = 0; i < gMaxSocketNum; i++) {
+    PT_BEGIN(&pt);
+
+    for (i = 0; i < gMaxSocketNum; i++) {
         if (gSockets[i].used == false || gSockets[i].txFifo == 0) {
             continue;
         }
@@ -145,17 +149,24 @@ static void checkTxFifo(void) {
             continue;
         }
         gSockets[i].send(gBuffer->buf, num, tag.ip, tag.port);
+        PT_YIELD(&pt);
     }
+
+    PT_END(&pt);
 }
 
-static void checkRxFifo(void) {
+static int checkRxFifo(void) {
+    static struct pt pt = {0};
     static tRxTag tag;
     static int num = 0;
     static TZListNode* node = NULL;
     static tItem* item = NULL;
     static VSocketRxParam rxParam;
+    static int i = 0;
 
-    for (int i = 0; i < gMaxSocketNum; i++) {
+    PT_BEGIN(&pt);
+
+    for (i = 0; i < gMaxSocketNum; i++) {
         if (gSockets[i].used == false || gSockets[i].rxFifo == 0) {
             continue;
         }
@@ -186,8 +197,11 @@ static void checkRxFifo(void) {
             item = (tItem*)node->Data;
             item->callback(&rxParam);
             node = node->Next;
+            PT_YIELD(&pt);
         }
     }
+
+    PT_END(&pt);
 }
 
 // VSocketCreate 创建socket,并建立fifo
