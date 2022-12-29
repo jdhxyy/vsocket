@@ -143,8 +143,7 @@ static int checkTxFifo(void) {
             continue;
         }
 
-        num = TZFifoReadMix(gSockets[i].txFifo, (uint8_t*)&tag, sizeof(tTxTag), 
-            gBuffer->buf, gBuffer->len);
+        num = TZFifoReadMix(gSockets[i].txFifo, (uint8_t*)&tag, sizeof(tTxTag), gBuffer->buf, gBuffer->len);
         if (num <= 0) {
             continue;
         }
@@ -171,8 +170,7 @@ static int checkRxFifo(void) {
             continue;
         }
 
-        num = TZFifoReadMix(gSockets[i].rxFifo, (uint8_t*)&tag, sizeof(tRxTag), 
-            gBuffer->buf, gBuffer->len);
+        num = TZFifoReadMix(gSockets[i].rxFifo, (uint8_t*)&tag, sizeof(tRxTag), gBuffer->buf, gBuffer->len);
         if (num <= 0) {
             continue;
         }
@@ -197,8 +195,9 @@ static int checkRxFifo(void) {
             item = (tItem*)node->Data;
             item->callback(&rxParam);
             node = node->Next;
-            PT_YIELD(&pt);
         }
+        // 如果要进一步YIELD,则需要gBuffer分为发送和接收两个buffer
+        PT_YIELD(&pt);
     }
 
     PT_END(&pt);
@@ -251,8 +250,7 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
         gBuffer->len = socketInfo->MaxLen;
     } else {
         if (socketInfo->MaxLen > gBuffer->len) {
-            TZBufferDynamic* buffer = TZMalloc(gMid, 
-                (int)sizeof(TZBufferDynamic) + socketInfo->MaxLen);
+            TZBufferDynamic* buffer = TZMalloc(gMid, (int)sizeof(TZBufferDynamic) + socketInfo->MaxLen);
             if (buffer == NULL) {
                 LE(TAG, "socket:%d create failed!malloc buffer failed", socketInfo->Pipe);
                 return false;
