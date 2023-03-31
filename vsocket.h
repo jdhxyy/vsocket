@@ -1,9 +1,9 @@
 // Copyright 2020-2021 The jdh99 Authors. All rights reserved.
-// ĞéÄâ¶Ë¿Ú
+// è™šæ‹Ÿç«¯å£
 // Authors: jdh99 <jdh821@163.com>
-// ±¾Ä£¿é¹¦ÄÜ:
-// 1.´®¿Ú,ÉäÆµ,Íø¿ÚµÈ½Ó¿ÚÍ³Ò»ÊÕ·¢¹ÜÀí
-// 2.Ê¹ÓÃfifo»úÖÆ¿ÉÖ±½Ó´ÓÖĞ¶Ï½ÓÊÕÊı¾İ²¢½øĞĞ»º´æ´¦Àí
+// æœ¬æ¨¡å—åŠŸèƒ½:
+// 1.ä¸²å£,å°„é¢‘,ç½‘å£ç­‰æ¥å£ç»Ÿä¸€æ”¶å‘ç®¡ç†
+// 2.ä½¿ç”¨fifoæœºåˆ¶å¯ç›´æ¥ä»ä¸­æ–­æ¥æ”¶æ•°æ®å¹¶è¿›è¡Œç¼“å­˜å¤„ç†
 
 #ifndef VSOCKET_H
 #define VSOCKET_H
@@ -12,7 +12,7 @@
 
 #pragma pack(1)
 
-// VSocketInfo ¶Ë¿ÚĞÅÏ¢
+// VSocketInfo ç«¯å£ä¿¡æ¯
 typedef struct {
     int Pipe;
     int MaxLen;
@@ -21,67 +21,67 @@ typedef struct {
 
     // API
     TZIsAllowSendFunc IsAllowSend;
-    // ·ÇÍøÂç¶Ë¿Ú¿É²»¹ÜipºÍportÁ½¸ö×Ö¶Î
+    // éç½‘ç»œç«¯å£å¯ä¸ç®¡ipå’Œportä¸¤ä¸ªå­—æ®µ
     TZNetDataFunc Send;
 } VSocketInfo;
 
-// VSocketRxParam ¶Ë¿Ú½ÓÊÕÊı¾İ²ÎÊı
+// VSocketRxParam ç«¯å£æ¥æ”¶æ•°æ®å‚æ•°
 typedef struct {
     int Pipe;
     uint8_t* Bytes;
     int Size;
     int Metric;
-    // ½ÓÊÕÊ±¼ä.µ¥Î»:us
+    // æ¥æ”¶æ—¶é—´.å•ä½:us
     uint64_t RxTime;
 
-    // Ô´½ÚµãÍøÂçĞÅÏ¢.²»ÊÇÍøÂç¶Ë¿Ú¿É²»¹ÜÕâÁ½¸ö×Ö¶Î
+    // æºèŠ‚ç‚¹ç½‘ç»œä¿¡æ¯.ä¸æ˜¯ç½‘ç»œç«¯å£å¯ä¸ç®¡è¿™ä¸¤ä¸ªå­—æ®µ
     uint32_t IP;
     uint16_t Port;
 } VSocketRxParam;
 
-// VSocketTxParam ¶Ë¿Ú·¢ËÍÊı¾İ²ÎÊı
+// VSocketTxParam ç«¯å£å‘é€æ•°æ®å‚æ•°
 typedef struct {
     int Pipe;
     uint8_t* Bytes;
     int Size;
 
-    // Ä¿µÄ½ÚµãÍøÂçĞÅÏ¢.²»ÊÇÍøÂç¶Ë¿Ú¿É²»¹ÜÕâÁ½¸ö×Ö¶Î
+    // ç›®çš„èŠ‚ç‚¹ç½‘ç»œä¿¡æ¯.ä¸æ˜¯ç½‘ç»œç«¯å£å¯ä¸ç®¡è¿™ä¸¤ä¸ªå­—æ®µ
     uint32_t IP;
     uint16_t Port;
 } VSocketTxParam;
 
 #pragma pack()
 
-// VSocketRxFunc ´ÓÄ³¶Ë¿Ú½ÓÊÕº¯ÊıÀàĞÍ
+// VSocketRxFunc ä»æŸç«¯å£æ¥æ”¶å‡½æ•°ç±»å‹
 typedef void (*VSocketRxFunc)(VSocketRxParam* rxParam);
 
-// VSocketLoad Ä£¿éÔØÈë
-// midÊÇtzmallocÄÚ´æ¹ÜÀíÖĞµÄÄÚ´æid,maxSocketNumÊÇ×î´ó¶Ë¿ÚÊı
+// VSocketLoad æ¨¡å—è½½å…¥
+// midæ˜¯tzmallocå†…å­˜ç®¡ç†ä¸­çš„å†…å­˜id,maxSocketNumæ˜¯æœ€å¤§ç«¯å£æ•°
 bool VSocketLoad(int mid, int maxSocketNum);
 
-// VSocketCreate ´´½¨socket,²¢½¨Á¢fifo
-// Èç¹û²»ĞèÒª·¢ËÍfifo,ÔòTxFifoItemSum¿ÉÉèÖÃÎª0
-// ½ÓÊÕfifoÊÇ±ØĞëµÄ,RxFifoItemSum²»ÄÜÉèÖÃÎª0
+// VSocketCreate åˆ›å»ºsocket,å¹¶å»ºç«‹fifo
+// å¦‚æœä¸éœ€è¦å‘é€fifo,åˆ™TxFifoItemSumå¯è®¾ç½®ä¸º0
+// æ¥æ”¶fifoæ˜¯å¿…é¡»çš„,RxFifoItemSumä¸èƒ½è®¾ç½®ä¸º0
 bool VSocketCreate(VSocketInfo* socketInfo);
 
-// VSocketTx ·¢ËÍÊı¾İ
-// ·ÇÍøÂç¶Ë¿Ú²»ĞèÒª¹ÜipºÍportÁ½¸ö×Ö¶Î,Ìî0¼´¿É
+// VSocketTx å‘é€æ•°æ®
+// éç½‘ç»œç«¯å£ä¸éœ€è¦ç®¡ipå’Œportä¸¤ä¸ªå­—æ®µ,å¡«0å³å¯
 bool VSocketTx(VSocketTxParam* txParam);
 
-// VSocketRx ½ÓÊÕÊı¾İ
-// Ó¦ÓÃÄ£¿é½ÓÊÕµ½Êı¾İºóĞèµ÷ÓÃ±¾º¯Êı
-// rxTime×Ö¶Î²»ĞèÒª¹Ü,Ìî0¼´¿É
-// ·ÇÍøÂç¶Ë¿Ú²»ĞèÒª¹ÜipºÍportÁ½¸ö×Ö¶Î,Ìî0¼´¿É
+// VSocketRx æ¥æ”¶æ•°æ®
+// åº”ç”¨æ¨¡å—æ¥æ”¶åˆ°æ•°æ®åéœ€è°ƒç”¨æœ¬å‡½æ•°
+// rxTimeå­—æ®µä¸éœ€è¦ç®¡,å¡«0å³å¯
+// éç½‘ç»œç«¯å£ä¸éœ€è¦ç®¡ipå’Œportä¸¤ä¸ªå­—æ®µ,å¡«0å³å¯
 bool VSocketRx(VSocketRxParam* rxParam);
 
-// VSocketRegisterObserver ×¢²á½ÓÊÕ¹Û²ìÕß
-// callbackÊÇ»Øµ÷º¯Êı,¶Ë¿Ú½ÓÊÕµ½Êı¾İ»á»Øµ÷´Ëº¯Êı
+// VSocketRegisterObserver æ³¨å†Œæ¥æ”¶è§‚å¯Ÿè€…
+// callbackæ˜¯å›è°ƒå‡½æ•°,ç«¯å£æ¥æ”¶åˆ°æ•°æ®ä¼šå›è°ƒæ­¤å‡½æ•°
 bool VSocketRegisterObserver(VSocketRxFunc callback);
 
-// VSocketIsAllowSend ÊÇ·ñÔÊĞí·¢ËÍ
+// VSocketIsAllowSend æ˜¯å¦å…è®¸å‘é€
 bool VSocketIsAllowSend(int pipe);
 
-// VSocketRxFifoWriteable ¼ì²é½ÓÊÕfifoÊÇ·ñ¿ÉÒÔĞ´Èë
+// VSocketRxFifoWriteable æ£€æŸ¥æ¥æ”¶fifoæ˜¯å¦å¯ä»¥å†™å…¥
 bool VSocketRxFifoWriteable(int pipe);
 
 #endif

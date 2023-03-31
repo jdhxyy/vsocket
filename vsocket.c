@@ -1,9 +1,9 @@
 // Copyright 2020-2021 The jdh99 Authors. All rights reserved.
-// ĞéÄâ¶Ë¿Ú
+// è™šæ‹Ÿç«¯å£
 // Authors: jdh99 <jdh821@163.com>
-// ±¾Ä£¿é¹¦ÄÜ:
-// 1.´®¿Ú,ÉäÆµ,Íø¿ÚµÈ½Ó¿ÚÍ³Ò»ÊÕ·¢¹ÜÀí
-// 2.Ê¹ÓÃfifo»úÖÆ¿ÉÖ±½Ó´ÓÖĞ¶Ï½ÓÊÕÊı¾İ²¢½øĞĞ»º´æ´¦Àí
+// æœ¬æ¨¡å—åŠŸèƒ½:
+// 1.ä¸²å£,å°„é¢‘,ç½‘å£ç­‰æ¥å£ç»Ÿä¸€æ”¶å‘ç®¡ç†
+// 2.ä½¿ç”¨fifoæœºåˆ¶å¯ç›´æ¥ä»ä¸­æ–­æ¥æ”¶æ•°æ®å¹¶è¿›è¡Œç¼“å­˜å¤„ç†
 
 #include "vsocket.h"
 #include "tzfifo.h"
@@ -18,7 +18,7 @@
 
 #define TAG "vsocket"
 
-// Í³¼ÆÏîÃû³Æ
+// ç»Ÿè®¡é¡¹åç§°
 #define STATISTICS_RX_SUCCESS "vsocket_rx_success"
 #define STATISTICS_RX_FAIL "vsocket_rx_fail"
 #define STATISTICS_TX_SUCCESS "vsocket_tx_success"
@@ -49,7 +49,7 @@ typedef struct {
     uint16_t port;
 } tTxTag;
 
-// ½ÓÊÕ¹Û²ìÕß
+// æ¥æ”¶è§‚å¯Ÿè€…
 typedef struct {
     VSocketRxFunc callback;
 } tItem;
@@ -59,12 +59,12 @@ typedef struct {
 static int gMid = -1;
 static tSocket* gSockets = NULL;
 static int gMaxSocketNum = 0;
-// ÓÃÓÚ·¢ËÍºÍ½ÓÊÕ»º´æ
+// ç”¨äºå‘é€å’Œæ¥æ”¶ç¼“å­˜
 static TZBufferDynamic* gBuffer = NULL;
-// ´æ´¢½ÓÊÕ¹Û²ìÕß
+// å­˜å‚¨æ¥æ”¶è§‚å¯Ÿè€…
 static intptr_t gList = 0;
 
-// Í³¼ÆÏîid
+// ç»Ÿè®¡é¡¹id
 static int gIdRxSuccess = -1;
 static int gIdRxFail = -1;
 static int gIdTxSuccess = -1;
@@ -76,8 +76,8 @@ static int checkRxFifo(void);
 static bool isObserverExist(VSocketRxFunc callback);
 static TZListNode* createNode(void);
 
-// VSocketLoad Ä£¿éÔØÈë
-// midÊÇtzmallocÄÚ´æ¹ÜÀíÖĞµÄÄÚ´æid,maxSocketNumÊÇ×î´ó¶Ë¿ÚÊı
+// VSocketLoad æ¨¡å—è½½å…¥
+// midæ˜¯tzmallocå†…å­˜ç®¡ç†ä¸­çš„å†…å­˜id,maxSocketNumæ˜¯æœ€å¤§ç«¯å£æ•°
 bool VSocketLoad(int mid, int maxSocketNum) {
     gIdRxSuccess = StatisticsRegister(STATISTICS_RX_SUCCESS);
     gIdRxFail = StatisticsRegister(STATISTICS_RX_FAIL);
@@ -186,7 +186,7 @@ static int checkRxFifo(void) {
         rxParam.IP = tag.ip;
         rxParam.Port = tag.port;
 
-        // Í¨Öª¹Û²ìÕß
+        // é€šçŸ¥è§‚å¯Ÿè€…
         node = TZListGetHeader(gList);
         for (;;) {
             if (node == NULL) {
@@ -196,16 +196,16 @@ static int checkRxFifo(void) {
             item->callback(&rxParam);
             node = node->Next;
         }
-        // Èç¹ûÒª½øÒ»²½YIELD,ÔòĞèÒªgBuffer·ÖÎª·¢ËÍºÍ½ÓÊÕÁ½¸öbuffer
+        // å¦‚æœè¦è¿›ä¸€æ­¥YIELD,åˆ™éœ€è¦gBufferåˆ†ä¸ºå‘é€å’Œæ¥æ”¶ä¸¤ä¸ªbuffer
         PT_YIELD(&pt);
     }
 
     PT_END(&pt);
 }
 
-// VSocketCreate ´´½¨socket,²¢½¨Á¢fifo
-// Èç¹û²»ĞèÒª·¢ËÍfifo,ÔòTxFifoItemSum¿ÉÉèÖÃÎª0
-// ½ÓÊÕfifoÊÇ±ØĞëµÄ,RxFifoItemSum²»ÄÜÉèÖÃÎª0
+// VSocketCreate åˆ›å»ºsocket,å¹¶å»ºç«‹fifo
+// å¦‚æœä¸éœ€è¦å‘é€fifo,åˆ™TxFifoItemSumå¯è®¾ç½®ä¸º0
+// æ¥æ”¶fifoæ˜¯å¿…é¡»çš„,RxFifoItemSumä¸èƒ½è®¾ç½®ä¸º0
 bool VSocketCreate(VSocketInfo* socketInfo) {
     if (socketInfo == NULL || socketInfo->Pipe >= gMaxSocketNum || 
         gSockets[socketInfo->Pipe].used || socketInfo->MaxLen <= 0) {
@@ -214,7 +214,7 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
     }
 
     if (socketInfo->TxFifoItemSum > 0) {
-        // ¶à4¸ö×Ö½ÚÊÇÒòÎªfifo´æ´¢»ìºÏ½á¹¹ÌåĞèÔö¼Ó4×Ö½Ú³¤¶È
+        // å¤š4ä¸ªå­—èŠ‚æ˜¯å› ä¸ºfifoå­˜å‚¨æ··åˆç»“æ„ä½“éœ€å¢åŠ 4å­—èŠ‚é•¿åº¦
         gSockets[socketInfo->Pipe].txFifo = TZFifoCreate(gMid, 
             socketInfo->TxFifoItemSum, socketInfo->MaxLen + sizeof(tTxTag) + 4);
         if (gSockets[socketInfo->Pipe].txFifo == 0) {
@@ -223,7 +223,7 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
         }
     }
     if (socketInfo->RxFifoItemSum > 0) {
-        // ¶à4¸ö×Ö½ÚÊÇÒòÎªfifo´æ´¢»ìºÏ½á¹¹ÌåĞèÔö¼Ó4×Ö½Ú³¤¶È
+        // å¤š4ä¸ªå­—èŠ‚æ˜¯å› ä¸ºfifoå­˜å‚¨æ··åˆç»“æ„ä½“éœ€å¢åŠ 4å­—èŠ‚é•¿åº¦
         gSockets[socketInfo->Pipe].rxFifo = TZFifoCreate(gMid, 
             socketInfo->RxFifoItemSum, socketInfo->MaxLen + sizeof(tRxTag) + 4);
         if (gSockets[socketInfo->Pipe].rxFifo == 0) {
@@ -240,7 +240,7 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
     gSockets[socketInfo->Pipe].send = socketInfo->Send;
     gSockets[socketInfo->Pipe].used = true;
 
-    // ¿ª±ÙÓÃÓÚ·¢ËÍºÍ½ÓÊÕµÄ»º´æ
+    // å¼€è¾Ÿç”¨äºå‘é€å’Œæ¥æ”¶çš„ç¼“å­˜
     if (gBuffer == NULL) {
         gBuffer = TZMalloc(gMid, (int)sizeof(TZBufferDynamic) + socketInfo->MaxLen);
         if (gBuffer == NULL) {
@@ -264,8 +264,8 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
     return true;
 }
 
-// VSocketTx ·¢ËÍÊı¾İ
-// ·ÇÍøÂç¶Ë¿Ú²»ĞèÒª¹ÜipºÍportÁ½¸ö×Ö¶Î,Ìî0¼´¿É
+// VSocketTx å‘é€æ•°æ®
+// éç½‘ç»œç«¯å£ä¸éœ€è¦ç®¡ipå’Œportä¸¤ä¸ªå­—æ®µ,å¡«0å³å¯
 bool VSocketTx(VSocketTxParam* txParam) {
     if (txParam->Pipe >= gMaxSocketNum || 
         gSockets[txParam->Pipe].used == false || txParam->Bytes == NULL || 
@@ -303,10 +303,10 @@ bool VSocketTx(VSocketTxParam* txParam) {
     return true;
 }
 
-// VSocketRx ½ÓÊÕÊı¾İ
-// Ó¦ÓÃÄ£¿é½ÓÊÕµ½Êı¾İºóĞèµ÷ÓÃ±¾º¯Êı
-// rxTime×Ö¶Î²»ĞèÒª¹Ü,Ìî0¼´¿É
-// ·ÇÍøÂç¶Ë¿Ú²»ĞèÒª¹ÜipºÍportÁ½¸ö×Ö¶Î,Ìî0¼´¿É
+// VSocketRx æ¥æ”¶æ•°æ®
+// åº”ç”¨æ¨¡å—æ¥æ”¶åˆ°æ•°æ®åéœ€è°ƒç”¨æœ¬å‡½æ•°
+// rxTimeå­—æ®µä¸éœ€è¦ç®¡,å¡«0å³å¯
+// éç½‘ç»œç«¯å£ä¸éœ€è¦ç®¡ipå’Œportä¸¤ä¸ªå­—æ®µ,å¡«0å³å¯
 bool VSocketRx(VSocketRxParam* rxParam) {
     tRxTag tag;
     tag.rxTime = TZTimeGet();
@@ -337,8 +337,8 @@ bool VSocketRx(VSocketRxParam* rxParam) {
     return true;
 }
 
-// VSocketRegisterObserver ×¢²á½ÓÊÕ¹Û²ìÕß
-// callbackÊÇ»Øµ÷º¯Êı,¶Ë¿Ú½ÓÊÕµ½Êı¾İ»á»Øµ÷´Ëº¯Êı
+// VSocketRegisterObserver æ³¨å†Œæ¥æ”¶è§‚å¯Ÿè€…
+// callbackæ˜¯å›è°ƒå‡½æ•°,ç«¯å£æ¥æ”¶åˆ°æ•°æ®ä¼šå›è°ƒæ­¤å‡½æ•°
 bool VSocketRegisterObserver(VSocketRxFunc callback) {
     if (gMid < 0 || callback == NULL) {
         LE(TAG, "register observer failed!param is wrong");
@@ -390,7 +390,7 @@ static TZListNode* createNode(void) {
     return node;
 }
 
-// VSocketIsAllowSend ÊÇ·ñÔÊĞí·¢ËÍ
+// VSocketIsAllowSend æ˜¯å¦å…è®¸å‘é€
 bool VSocketIsAllowSend(int pipe) {
     if (pipe >= gMaxSocketNum || gSockets[pipe].used == false) {
         return false;
@@ -402,7 +402,7 @@ bool VSocketIsAllowSend(int pipe) {
     }
 }
 
-// VSocketRxFifoWriteable ¼ì²é½ÓÊÕfifoÊÇ·ñ¿ÉÒÔĞ´Èë
+// VSocketRxFifoWriteable æ£€æŸ¥æ¥æ”¶fifoæ˜¯å¦å¯ä»¥å†™å…¥
 bool VSocketRxFifoWriteable(int pipe) {
     if (pipe >= gMaxSocketNum || gSockets[pipe].used == false || 
         gSockets[pipe].rxFifo == 0) {
