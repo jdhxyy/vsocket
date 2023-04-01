@@ -70,6 +70,9 @@ static int gIdRxFail = -1;
 static int gIdTxSuccess = -1;
 static int gIdTxFail = -1;
 
+static bool gIsTxBusy = false;
+static bool gIsRxBusy = false;
+
 static int task(void);
 static int checkTxFifo(void);
 static int checkRxFifo(void);
@@ -132,11 +135,14 @@ static int checkTxFifo(void) {
     static tTxTag tag;
     static int num = 0;
     static int i = 0;
+    static int freeSocketNum = 0;
 
     PT_BEGIN(&pt);
 
+    freeSocketNum = 0;
     for (i = 0; i < gMaxSocketNum; i++) {
         if (gSockets[i].used == false || gSockets[i].txFifo == 0) {
+            freeSocketNum++;
             continue;
         }
         if (gSockets[i].isAllowSend() == false) {
@@ -145,10 +151,17 @@ static int checkTxFifo(void) {
 
         num = TZFifoReadMix(gSockets[i].txFifo, (uint8_t*)&tag, sizeof(tTxTag), gBuffer->buf, gBuffer->len);
         if (num <= 0) {
+            freeSocketNum++;
             continue;
         }
+
+        gIsTxBusy = true;
         gSockets[i].send(gBuffer->buf, num, tag.ip, tag.port);
         PT_YIELD(&pt);
+    }
+
+    if (freeSocketNum >= gMaxSocketNum) {
+        gIsTxBusy = false;
     }
 
     PT_END(&pt);
@@ -162,21 +175,27 @@ static int checkRxFifo(void) {
     static tItem* item = NULL;
     static VSocketRxParam rxParam;
     static int i = 0;
+    static int freeSocketNum = 0;
 
     PT_BEGIN(&pt);
 
+    freeSocketNum = 0;
     for (i = 0; i < gMaxSocketNum; i++) {
         if (gSockets[i].used == false || gSockets[i].rxFifo == 0) {
+            freeSocketNum++;
             continue;
         }
 
         num = TZFifoReadMix(gSockets[i].rxFifo, (uint8_t*)&tag, sizeof(tRxTag), gBuffer->buf, gBuffer->len);
         if (num <= 0) {
+            freeSocketNum++;
             continue;
         }
         if (gList == 0) {
             continue;
         }
+
+        gIsRxBusy = true;
 
         rxParam.Pipe = i;
         rxParam.Bytes = gBuffer->buf;
@@ -198,6 +217,10 @@ static int checkRxFifo(void) {
         }
         // 如果要进一步YIELD,则需要gBuffer分为发送和接收两个buffer
         PT_YIELD(&pt);
+    }
+
+    if (freeSocketNum >= gMaxSocketNum) {
+        gIsRxBusy = false;
     }
 
     PT_END(&pt);
@@ -409,4 +432,10 @@ bool VSocketRxFifoWriteable(int pipe) {
         return false;
     }
     return TZFifoWriteable(gSockets[pipe].rxFifo);
+}
+
+// VSocketIsBusy 是否忙碌
+// 对忙碌的定义是有发送和接收任务.本函数接口可用于低功耗,不忙时可进入休眠
+bool VSocketIsBusy(void) {
+    return gIsTxBusy == false && gIsRxBusy == false;
 }

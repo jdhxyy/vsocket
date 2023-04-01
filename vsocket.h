@@ -84,4 +84,8 @@ bool VSocketIsAllowSend(int pipe);
 // VSocketRxFifoWriteable 检查接收fifo是否可以写入
 bool VSocketRxFifoWriteable(int pipe);
 
+// VSocketIsBusy 是否忙碌
+// 对忙碌的定义是有发送和接收任务.本函数接口可用于低功耗,不忙时可进入休眠
+bool VSocketIsBusy(void);
+
 #endif
