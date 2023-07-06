@@ -340,6 +340,7 @@ bool VSocketRx(VSocketRxParam* rxParam) {
     if (rxParam->Pipe >= gMaxSocketNum || 
         gSockets[rxParam->Pipe].used == false || rxParam->Bytes == NULL || 
         rxParam->Size <= 0 || rxParam->Size > gSockets[rxParam->Pipe].maxLen) {
+        LW(TAG, "rx fail!pipe:%d size:%d max len:%d", rxParam->Pipe, rxParam->Size, gSockets[rxParam->Pipe].maxLen);
         StatisticsAdd(gIdRxFail);
         return false;
     }
@@ -348,11 +349,13 @@ bool VSocketRx(VSocketRxParam* rxParam) {
         return false;
     }
     if (TZFifoWriteable(gSockets[rxParam->Pipe].rxFifo) == false) {
+        LW(TAG, "rx fail!fifo is full.pipe:%d", rxParam->Pipe);
         StatisticsAdd(gIdRxFail);
         return false;
     }
     if (TZFifoWriteMix(gSockets[rxParam->Pipe].rxFifo, (uint8_t*)&tag, 
         sizeof(tRxTag), rxParam->Bytes, rxParam->Size) == false) {
+        LW(TAG, "rx fail!write fail.pipe:%d", rxParam->Pipe);
         StatisticsAdd(gIdRxFail);
         return false;
     }
