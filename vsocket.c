@@ -440,5 +440,5 @@ bool VSocketRxFifoWriteable(int pipe) {
 // VSocketIsBusy 是否忙碌
 // 对忙碌的定义是有发送和接收任务.本函数接口可用于低功耗,不忙时可进入休眠
 bool VSocketIsBusy(void) {
-    return gIsTxBusy == false && gIsRxBusy == false;
+    return gIsTxBusy == true || gIsRxBusy == true;
 }
