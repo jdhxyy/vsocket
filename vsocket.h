@@ -16,8 +16,8 @@
 typedef struct {
     int Pipe;
     int MaxLen;
-    int TxFifoItemSum;
-    int RxFifoItemSum;
+    int TxFifoSize;
+    int RxFifoSize;
 
     // API
     TZIsAllowSendFunc IsAllowSend;

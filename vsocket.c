@@ -6,7 +6,7 @@
 // 2.使用fifo机制可直接从中断接收数据并进行缓存处理
 
 #include "vsocket.h"
-#include "tzfifo.h"
+#include "kuggis.h"
 #include "tzmalloc.h"
 #include "tztime.h"
 #include "async.h"
@@ -149,7 +149,7 @@ static int checkTxFifo(void) {
             continue;
         }
 
-        num = TZFifoReadMix(gSockets[i].txFifo, (uint8_t*)&tag, sizeof(tTxTag), gBuffer->buf, gBuffer->len);
+        num = KuggisRead(gSockets[i].txFifo, gBuffer->buf, gBuffer->len, (uint8_t*)&tag, sizeof(tTxTag));
         if (num <= 0) {
             freeSocketNum++;
             continue;
@@ -186,7 +186,7 @@ static int checkRxFifo(void) {
             continue;
         }
 
-        num = TZFifoReadMix(gSockets[i].rxFifo, (uint8_t*)&tag, sizeof(tRxTag), gBuffer->buf, gBuffer->len);
+        num = KuggisRead(gSockets[i].rxFifo, gBuffer->buf, gBuffer->len, (uint8_t*)&tag, sizeof(tRxTag));
         if (num <= 0) {
             freeSocketNum++;
             continue;
@@ -236,22 +236,18 @@ bool VSocketCreate(VSocketInfo* socketInfo) {
         return false;
     }
 
-    if (socketInfo->TxFifoItemSum > 0) {
-        // 多4个字节是因为fifo存储混合结构体需增加4字节长度
-        gSockets[socketInfo->Pipe].txFifo = TZFifoCreate(gMid, 
-            socketInfo->TxFifoItemSum, socketInfo->MaxLen + sizeof(tTxTag) + 4);
+    if (socketInfo->TxFifoSize > 0) {
+        gSockets[socketInfo->Pipe].txFifo = KuggisCreate(gMid, socketInfo->TxFifoSize);
         if (gSockets[socketInfo->Pipe].txFifo == 0) {
             LE(TAG, "socket:%d create failed!create tx fifo failed", socketInfo->Pipe);
             return false;
         }
     }
-    if (socketInfo->RxFifoItemSum > 0) {
-        // 多4个字节是因为fifo存储混合结构体需增加4字节长度
-        gSockets[socketInfo->Pipe].rxFifo = TZFifoCreate(gMid, 
-            socketInfo->RxFifoItemSum, socketInfo->MaxLen + sizeof(tRxTag) + 4);
+    if (socketInfo->RxFifoSize > 0) {
+        gSockets[socketInfo->Pipe].rxFifo = KuggisCreate(gMid, socketInfo->RxFifoSize);
         if (gSockets[socketInfo->Pipe].rxFifo == 0) {
             if (gSockets[socketInfo->Pipe].txFifo) {
-                TZFifoDelete(gSockets[socketInfo->Pipe].txFifo);
+                KuggisDelete(gSockets[socketInfo->Pipe].txFifo);
                 gSockets[socketInfo->Pipe].txFifo = 0;
             }
             LE(TAG, "socket:%d create failed!create rx fifo failed", socketInfo->Pipe);
@@ -307,8 +303,10 @@ bool VSocketTx(VSocketTxParam* txParam) {
         StatisticsAdd(gIdTxFail);
         return false;
     }
-    if (TZFifoWriteable(gSockets[txParam->Pipe].txFifo) == false) {
-        LW(TAG, "%d send failed!fifo is full", txParam->Pipe);
+
+    int count = KuggisWriteableCount(gSockets[txParam->Pipe].txFifo);
+    if (count < txParam->Size) {
+        LW(TAG, "%d send failed!fifo is full.%d %d", txParam->Pipe, count, txParam->Size);
         StatisticsAdd(gIdTxFail);
         return false;
     }
@@ -316,8 +314,7 @@ bool VSocketTx(VSocketTxParam* txParam) {
     tTxTag tag;
     tag.ip = txParam->IP;
     tag.port = txParam->Port;
-    if (TZFifoWriteMix(gSockets[txParam->Pipe].txFifo, (uint8_t*)&tag, 
-        sizeof(tTxTag), txParam->Bytes, txParam->Size) == false) {
+    if (KuggisWrite(gSockets[txParam->Pipe].txFifo, txParam->Bytes, txParam->Size, (uint8_t*)&tag, sizeof(tTxTag)) == false) {
         LW(TAG, "%d send failed!write fifo failed", txParam->Pipe);
         StatisticsAdd(gIdTxFail);
         return false;
@@ -348,13 +345,13 @@ bool VSocketRx(VSocketRxParam* rxParam) {
         StatisticsAdd(gIdRxFail);
         return false;
     }
-    if (TZFifoWriteable(gSockets[rxParam->Pipe].rxFifo) == false) {
-        LW(TAG, "rx fail!fifo is full.pipe:%d", rxParam->Pipe);
+    int count = KuggisWriteableCount(gSockets[rxParam->Pipe].rxFifo);
+    if (count < rxParam->Size) {
+        LW(TAG, "rx fail!fifo is full.pipe:%d.%d %d", rxParam->Pipe, count, rxParam->Size);
         StatisticsAdd(gIdRxFail);
         return false;
     }
-    if (TZFifoWriteMix(gSockets[rxParam->Pipe].rxFifo, (uint8_t*)&tag, 
-        sizeof(tRxTag), rxParam->Bytes, rxParam->Size) == false) {
+    if (KuggisWrite(gSockets[rxParam->Pipe].rxFifo, rxParam->Bytes, rxParam->Size, (uint8_t*)&tag, sizeof(tRxTag)) == false) {
         LW(TAG, "rx fail!write fail.pipe:%d", rxParam->Pipe);
         StatisticsAdd(gIdRxFail);
         return false;
@@ -424,7 +421,7 @@ bool VSocketIsAllowSend(int pipe) {
     if (gSockets[pipe].txFifo == 0) {
         return gSockets[pipe].isAllowSend();
     } else {
-        return TZFifoWriteable(gSockets[pipe].txFifo);
+        return KuggisWriteableCount(gSockets[pipe].txFifo) > 0;
     }
 }
 
@@ -434,7 +431,7 @@ bool VSocketRxFifoWriteable(int pipe) {
         gSockets[pipe].rxFifo == 0) {
         return false;
     }
-    return TZFifoWriteable(gSockets[pipe].rxFifo);
+    return KuggisWriteableCount(gSockets[pipe].rxFifo) > 0;
 }
 
 // VSocketIsBusy 是否忙碌
