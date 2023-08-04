@@ -7,3 +7,4 @@ https://github.com/jdhxyy/pt.git
 https://github.com/jdhxyy/tztype.git
 https://github.com/jdhxyy/tzfifo.git
 https://github.com/jdhxyy/statistics.git
+https://gitee.com/jdhxyy/kuggis.git
