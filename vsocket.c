@@ -18,12 +18,6 @@
 
 #define TAG "vsocket"
 
-// 统计项名称
-#define STATISTICS_RX_SUCCESS "vsocket_rx_success"
-#define STATISTICS_RX_FAIL "vsocket_rx_fail"
-#define STATISTICS_TX_SUCCESS "vsocket_tx_success"
-#define STATISTICS_TX_FAIL "vsocket_tx_fail"
-
 #pragma pack(1)
 
 typedef struct {
@@ -65,9 +59,9 @@ static TZBufferDynamic* gBuffer = NULL;
 static intptr_t gList = 0;
 
 // 统计项id
-static int gIdRxSuccess = -1;
+static int gIdRxOK = -1;
 static int gIdRxFail = -1;
-static int gIdTxSuccess = -1;
+static int gIdTxOK = -1;
 static int gIdTxFail = -1;
 
 static bool gIsTxBusy = false;
@@ -82,12 +76,12 @@ static TZListNode* createNode(void);
 // VSocketLoad 模块载入
 // mid是tzmalloc内存管理中的内存id,maxSocketNum是最大端口数
 bool VSocketLoad(int mid, int maxSocketNum) {
-    gIdRxSuccess = StatisticsRegister(STATISTICS_RX_SUCCESS);
-    gIdRxFail = StatisticsRegister(STATISTICS_RX_FAIL);
-    gIdTxSuccess = StatisticsRegister(STATISTICS_TX_SUCCESS);
-    gIdTxFail = StatisticsRegister(STATISTICS_TX_FAIL);
+    gIdRxOK = StatisticsRegister("vsocket_rx_ok");
+    gIdRxFail = StatisticsRegister("vsocket_rx_fail");
+    gIdTxOK = StatisticsRegister("vsocket_tx_ok");
+    gIdTxFail = StatisticsRegister("vsocket_tx_fail");
 
-    if (gIdRxSuccess < 0 || gIdRxFail < 0 || gIdTxSuccess < 0 || gIdTxFail < 0) {
+    if (gIdRxOK < 0 || gIdRxFail < 0 || gIdTxOK < 0 || gIdTxFail < 0) {
         LE(TAG, "load fail!statistics register fail");
         return false;
     }
@@ -296,7 +290,7 @@ bool VSocketTx(VSocketTxParam* txParam) {
     if (gSockets[txParam->Pipe].txFifo == 0) {
         if (gSockets[txParam->Pipe].isAllowSend()) {
             gSockets[txParam->Pipe].send(txParam->Bytes, txParam->Size, txParam->IP, txParam->Port);
-            StatisticsAdd(gIdTxSuccess);
+            StatisticsAdd(gIdTxOK);
             return true;
         }
         LW(TAG, "%d send failed!pipe is busy", txParam->Pipe);
@@ -319,7 +313,7 @@ bool VSocketTx(VSocketTxParam* txParam) {
         StatisticsAdd(gIdTxFail);
         return false;
     }
-    StatisticsAdd(gIdTxSuccess);
+    StatisticsAdd(gIdTxOK);
     return true;
 }
 
@@ -356,7 +350,7 @@ bool VSocketRx(VSocketRxParam* rxParam) {
         StatisticsAdd(gIdRxFail);
         return false;
     }
-    StatisticsAdd(gIdRxSuccess);
+    StatisticsAdd(gIdRxOK);
     return true;
 }
 
